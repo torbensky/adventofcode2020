@@ -13,3 +13,8 @@ Find three numbers in the input list that sum to 2020. The answer to the challen
 ## Running
 
 From this directory, `go run cmd/main.go ./input.txt`
+
+## Implementation Notes
+
+- Sorting makes the algorith implementation very easy because we can stop iterating the slice when we exceed the target value `2020`
+- The algorithm is basically a permutation generator. Since order doesn't matter, we can solve using some straightforward nested loops.
