@@ -25,16 +25,21 @@ func main() {
 	}
 	defer file.Close()
 
-	// Scan in numeric data
+	// Scan passwords file and check validation
 
-	scanner := bufio.NewScanner(file)
 	validPart1Count := 0
 	validPart2Count := 0
+	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
+
+		// Parse out the data
+
 		policy, password, err := processLine(scanner.Text())
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		// Count valid passwords
 
 		if validatePart1(password, policy) {
 			validPart1Count++
@@ -48,6 +53,8 @@ func main() {
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
+
+	// RESULTS!
 
 	fmt.Printf("Part1 - found %d valid passwords\n", validPart1Count)
 	fmt.Printf("Part2 - found %d valid passwords\n", validPart2Count)
@@ -66,6 +73,7 @@ type passwordPolicy struct {
 	char rune // the char that must occur
 }
 
+// Parses a line of the challenge input and returns structured data
 func processLine(text string) (*passwordPolicy, string, error) {
 	results := lineRegex.FindStringSubmatch(text)
 	if len(results) < 5 {
@@ -89,13 +97,19 @@ func processLine(text string) (*passwordPolicy, string, error) {
 	}, results[4], nil
 }
 
+// Validates the password according to part 2 requirements
+// password must contain the designated character at either position v1 OR v2
+// NOTE: positions are NOT zero-indexed
 func validatePart2(password string, policy *passwordPolicy) bool {
-	c1 := []rune(password)[policy.v1-1]
-	c2 := []rune(password)[policy.v2-1]
+	c1 := []rune(password)[policy.v1-1] // extract char at position v1
+	c2 := []rune(password)[policy.v2-1] // extract char at position v2
 
+	// Character must occur at EITHER position v1 OR v2
 	return c1 == policy.char && c2 != policy.char || c1 != policy.char && c2 == policy.char
 }
 
+// Validates the password according to part 1 requirements
+// password must contain between v1-v2 occurences of the designated character
 func validatePart1(password string, policy *passwordPolicy) bool {
 	count := strings.Count(password, string(policy.char))
 	if count <= policy.v2 && count >= policy.v1 {
