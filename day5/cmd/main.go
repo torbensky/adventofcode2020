@@ -31,10 +31,22 @@ func splitRange(r numRange) (numRange, numRange) {
 type boardingPass struct {
 	row    int
 	column int
-	seatId int
+	seatID int
 }
 
-func loadData(path string) []*boardingPass {
+type boardingPassList []boardingPass
+
+func (s boardingPassList) Len() int {
+	return len(s)
+}
+func (s boardingPassList) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+func (s boardingPassList) Less(i, j int) bool {
+	return s[i].seatID < s[j].seatID
+}
+
+func loadData(path string) boardingPassList {
 	file, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)
@@ -42,7 +54,7 @@ func loadData(path string) []*boardingPass {
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 
-	var passes []*boardingPass
+	var passes boardingPassList
 	for scanner.Scan() {
 		rowRange := numRange{lower: 0, upper: 127}
 		colRange := numRange{lower: 0, upper: 7}
@@ -68,10 +80,10 @@ func loadData(path string) []*boardingPass {
 			}
 		}
 
-		passes = append(passes, &boardingPass{
+		passes = append(passes, boardingPass{
 			row:    rowRange.lower,
 			column: colRange.lower,
-			seatId: rowRange.lower*8 + colRange.lower,
+			seatID: rowRange.lower*8 + colRange.lower,
 		})
 	}
 
@@ -90,25 +102,23 @@ func main() {
 	}
 	passes := loadData(os.Args[1])
 
-	var seatIds []int
-	for _, p := range passes {
-		id := p.seatId
-		seatIds = append(seatIds, id)
-	}
-	sort.Ints(seatIds)
-	last := seatIds[0]
-	for _, id := range seatIds[1:] {
-		if id-last > 1 {
+	// Sort passes so they are ordered increasing by ID
+	sort.Sort(passes)
+
+	// Iterate over each seat until we find a gap in the ID's
+	lastSeatID := passes[0].seatID
+	for _, p := range passes[1:] {
+		if p.seatID-lastSeatID > 1 {
 			break
 		}
-		last = id
+		lastSeatID = p.seatID
 	}
 
 	fmt.Println("Part 1")
-	fmt.Printf("Highest seat ID is: %d\n", seatIds[len(seatIds)-1])
+	fmt.Printf("Highest seat ID is: %d\n", passes[len(passes)-1].seatID)
 
 	fmt.Println("Part 2")
-	fmt.Printf("My seat is: %d\n", last+1)
+	fmt.Printf("My seat is: %d\n", lastSeatID+1)
 }
 
 func mustNotError(err error) {
