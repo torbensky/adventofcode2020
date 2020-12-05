@@ -8,31 +8,33 @@ import (
 	"sort"
 )
 
-type NumRange struct {
+// represents a numeric range [lower,upper]
+type numRange struct {
 	lower int
 	upper int
 }
 
-func splitRange(r NumRange) (NumRange, NumRange) {
+// splits a numeric rane into two halves
+func splitRange(r numRange) (numRange, numRange) {
 	newRangeSize := (r.upper - r.lower) / 2
 
-	return NumRange{
+	return numRange{
 			lower: r.lower,
 			upper: r.lower + newRangeSize,
-		}, NumRange{
+		}, numRange{
 			lower: r.lower + newRangeSize + 1,
 			upper: r.upper,
 		}
 }
 
+// A decoded boarding pass with row/column for seating
 type boardingPass struct {
 	row    int
 	column int
+	seatId int
 }
 
-var passes []*boardingPass
-
-func loadData(path string) {
+func loadData(path string) []*boardingPass {
 	file, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)
@@ -40,9 +42,11 @@ func loadData(path string) {
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
 
+	var passes []*boardingPass
 	for scanner.Scan() {
-		rowRange := NumRange{lower: 0, upper: 127}
-		colrange := NumRange{lower: 0, upper: 7}
+		rowRange := numRange{lower: 0, upper: 127}
+		colRange := numRange{lower: 0, upper: 7}
+
 		line := scanner.Text()
 		for i, c := range line {
 			if i < 7 {
@@ -54,18 +58,20 @@ func loadData(path string) {
 					rowRange = upper
 				}
 			} else {
-				lower, upper := splitRange(colrange)
+				lower, upper := splitRange(colRange)
 				switch c {
 				case 'L':
-					colrange = lower
+					colRange = lower
 				case 'R':
-					colrange = upper
+					colRange = upper
 				}
 			}
 		}
+
 		passes = append(passes, &boardingPass{
 			row:    rowRange.lower,
-			column: colrange.lower,
+			column: colRange.lower,
+			seatId: rowRange.lower*8 + colRange.lower,
 		})
 	}
 
@@ -73,6 +79,7 @@ func loadData(path string) {
 		log.Fatal(err)
 	}
 
+	return passes
 }
 
 func main() {
@@ -81,24 +88,27 @@ func main() {
 	if len(os.Args) != 2 {
 		log.Fatal("This command accepts only one argument: the path to the input file")
 	}
-	loadData(os.Args[1])
+	passes := loadData(os.Args[1])
 
 	var seatIds []int
 	for _, p := range passes {
-		id := p.row*8 + p.column
+		id := p.seatId
 		seatIds = append(seatIds, id)
 	}
 	sort.Ints(seatIds)
 	last := seatIds[0]
 	for _, id := range seatIds[1:] {
-		fmt.Printf("id %d, last%d \n", id, last)
 		if id-last > 1 {
-			fmt.Printf("missing seat might be %d\n", id)
+			break
 		}
 		last = id
 	}
 
-	// fmt.Printf("highest seat id is %d\n", highest)
+	fmt.Println("Part 1")
+	fmt.Printf("Highest seat ID is: %d\n", seatIds[len(seatIds)-1])
+
+	fmt.Println("Part 2")
+	fmt.Printf("My seat is: %d\n", last+1)
 }
 
 func mustNotError(err error) {
