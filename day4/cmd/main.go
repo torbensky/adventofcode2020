@@ -24,12 +24,12 @@ func loadPassportsData(path string) []*passport {
 	scanner := bufio.NewScanner(file)
 
 	var line string
-	var passportBuf string
+	var sb strings.Builder
 	var passports []*passport
 	addPassport := func() {
-		p := parsePassport(passportBuf)
+		p := parsePassport(sb.String())
 		passports = append(passports, p)
-		passportBuf = ""
+		sb.Reset()
 	}
 
 	for scanner.Scan() {
@@ -37,11 +37,13 @@ func loadPassportsData(path string) []*passport {
 		if line == "" {
 			addPassport()
 		} else {
-			passportBuf = passportBuf + " " + line
+			sb.WriteString(sb.String())
+			sb.WriteString(" ")
+			sb.WriteString(line)
 		}
 	}
 	// Handle last passport edge case
-	if passportBuf != "" {
+	if sb.Len() > 0 {
 		addPassport()
 	}
 
