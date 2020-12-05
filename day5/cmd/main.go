@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 )
 
 type NumRange struct {
@@ -82,14 +83,22 @@ func main() {
 	}
 	loadData(os.Args[1])
 
-	highest := 0
+	var seatIds []int
 	for _, p := range passes {
 		id := p.row*8 + p.column
-		if id > highest {
-			highest = id
-		}
+		seatIds = append(seatIds, id)
 	}
-	fmt.Printf("highest seat id is %d\n", highest)
+	sort.Ints(seatIds)
+	last := seatIds[0]
+	for _, id := range seatIds[1:] {
+		fmt.Printf("id %d, last%d \n", id, last)
+		if id-last > 1 {
+			fmt.Printf("missing seat might be %d\n", id)
+		}
+		last = id
+	}
+
+	// fmt.Printf("highest seat id is %d\n", highest)
 }
 
 func mustNotError(err error) {
