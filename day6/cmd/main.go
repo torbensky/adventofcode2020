@@ -75,10 +75,10 @@ func parseGroup(data string) (int, int) {
 	numPeople := len(peoplesAnswers)
 
 	// Find unique questions
-	uniqueQuestions := map[rune]interface{}{}
+	uniqueQuestions := map[rune]struct{}{}
 	for i := 0; i < numPeople; i++ {
 		for _, c := range peoplesAnswers[i] {
-			uniqueQuestions[c] = nil
+			uniqueQuestions[c] = struct{}{}
 		}
 	}
 
