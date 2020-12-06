@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sort"
 	"strings"
 )
-
-type dataset sort.StringSlice
 
 // splitRecords splits on two consecutive, empty lines
 // ignores "\r" carriage returns (so "\n\r\n" or even "\n\r\r\r\r...\n" will delimit tokens)
@@ -113,10 +110,4 @@ func main() {
 
 	fmt.Printf("Part 1: %d\n", totalUnique)
 	fmt.Printf("Part 2: %d\n", totalEveryone)
-}
-
-func mustNotError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
 }
