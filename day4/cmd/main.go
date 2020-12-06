@@ -14,8 +14,8 @@ type passport struct {
 	data map[string]string
 }
 
-// splitPassports splits on 2 consecutive newlines "\n\n"
-// ignores "\r" carriage returns
+// splitPassports splits on two consecutive, empty lines
+// ignores "\r" carriage returns (so "\n\r\n" or even "\n\r\r\r\r...\n" will delimit tokens)
 func splitPassports(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	// End of file, and no data/token left
 	if atEOF && len(data) == 0 {
