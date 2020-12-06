@@ -15,7 +15,7 @@ type passport struct {
 }
 
 // splitPassports splits on 2 consecutive newlines "\n\n"
-// NOTE: does not consider "\r" carriage returns
+// ignores "\r" carriage returns
 func splitPassports(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	// End of file, and no data/token left
 	if atEOF && len(data) == 0 {
@@ -29,12 +29,15 @@ func splitPassports(data []byte, atEOF bool) (advance int, token []byte, err err
 		switch data[index] {
 		case '\n':
 			consecutiveNewLines++
+		case '\r':
+			// ignore
 		default:
 			consecutiveNewLines = 0
 		}
 
-		// found delim
+		// found token delim
 		if consecutiveNewLines == 2 {
+			// Note: may contain "\r" somewhere
 			return index + 1, data[:index-1], nil
 		}
 	}
