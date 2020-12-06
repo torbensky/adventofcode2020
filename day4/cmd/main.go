@@ -14,6 +14,40 @@ type passport struct {
 	data map[string]string
 }
 
+// splitPassports splits on 2 consecutive newlines "\n\n"
+// NOTE: does not consider "\r" carriage returns
+func splitPassports(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	// End of file, and no data/token left
+	if atEOF && len(data) == 0 {
+		return 0, nil, nil
+	}
+
+	// Check for token delim
+	index := 0
+	consecutiveNewLines := 0
+	for ; index < len(data); index++ {
+		switch data[index] {
+		case '\n':
+			consecutiveNewLines++
+		default:
+			consecutiveNewLines = 0
+		}
+
+		// found delim
+		if consecutiveNewLines == 2 {
+			return index + 1, data[:index-1], nil
+		}
+	}
+
+	// End of file, remaining data should be a token
+	if atEOF {
+		return len(data), data, nil
+	}
+
+	// Need MOAR
+	return 0, nil, nil
+}
+
 // Loads a list of passports from a file
 func loadPassportsData(path string) []*passport {
 	file, err := os.Open(path)
@@ -22,29 +56,12 @@ func loadPassportsData(path string) []*passport {
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
+	scanner.Split(splitPassports)
 
-	var line string
-	var sb strings.Builder
 	var passports []*passport
-	addPassport := func() {
-		p := parsePassport(sb.String())
-		passports = append(passports, p)
-		sb.Reset()
-	}
-
 	for scanner.Scan() {
-		line = scanner.Text()
-		if line == "" {
-			addPassport()
-		} else {
-			sb.WriteString(sb.String())
-			sb.WriteString(" ")
-			sb.WriteString(line)
-		}
-	}
-	// Handle last passport edge case
-	if sb.Len() > 0 {
-		addPassport()
+		passport := parsePassport(scanner.Text())
+		passports = append(passports, passport)
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -59,13 +76,8 @@ func parsePassport(raw string) *passport {
 	parsed := passport{
 		data: map[string]string{},
 	}
-	pairs := strings.Split(raw, " ")
+	pairs := strings.Fields(raw)
 	for _, pair := range pairs {
-		// prevent some anomalous whitespace split from messing things up
-		if !strings.Contains(pair, ":") {
-			continue
-		}
-
 		passKeyVal := strings.Split(pair, ":")
 		parsed.data[passKeyVal[0]] = passKeyVal[1]
 	}
