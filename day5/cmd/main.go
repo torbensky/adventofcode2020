@@ -35,6 +35,7 @@ type boardingPass struct {
 	seatID int
 }
 
+// sortable list of boarding passes
 type boardingPassList []boardingPass
 
 func (s boardingPassList) Len() int {
@@ -50,7 +51,7 @@ func (s boardingPassList) Less(i, j int) bool {
 func loadData(path string) boardingPassList {
 
 	var passes boardingPassList
-	common.ScanLines(common.GetInputFilePath(), func(line string) bool {
+	addPass := func(line string) {
 		rowRange := numRange{lower: 0, upper: 127}
 		colRange := numRange{lower: 0, upper: 7}
 
@@ -80,8 +81,8 @@ func loadData(path string) boardingPassList {
 			seatID: rowRange.lower*8 + colRange.lower,
 		})
 
-		return true
-	})
+	}
+	common.ScanLines(common.GetInputFilePath(), common.AllTokensFunc(addPass))
 
 	return passes
 }

@@ -12,12 +12,12 @@ import (
 // Scans the questions file and returns counts
 func scanQuestionsFile(path string) (int, int) {
 	totalUnique, totalEveryone := 0, 0
-	common.ScanFile(common.GetInputFilePath(), func(token string) bool {
+	countQuestions := func(token string) {
 		u, e := parseGroup(token)
 		totalUnique += u
 		totalEveryone += e
-		return true
-	}, common.SplitRecordsFunc)
+	}
+	common.ScanFile(common.GetInputFilePath(), common.AllTokensFunc(countQuestions), common.SplitRecordsFunc)
 
 	return totalUnique, totalEveryone
 }

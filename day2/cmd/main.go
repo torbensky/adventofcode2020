@@ -16,10 +16,9 @@ func main() {
 
 	validPart1Count := 0
 	validPart2Count := 0
-	// Scan passwords file and check validation
-	common.ScanFile(common.GetInputFilePath(), func(line string) bool {
-		// Parse out the data
 
+	// Takes a line of text and parses password data
+	scanFn := func(line string) {
 		policy, password, err := processLine(line)
 		if err != nil {
 			log.Fatal(err)
@@ -34,8 +33,8 @@ func main() {
 		if validatePart2(password, policy) {
 			validPart2Count++
 		}
-		return true
-	}, nil)
+	}
+	common.ScanLines(common.GetInputFilePath(), common.AllTokensFunc(scanFn))
 
 	// RESULTS!
 

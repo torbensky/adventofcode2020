@@ -18,11 +18,12 @@ type passport struct {
 // Loads a list of passports from a file
 func loadPassportsData(path string) []*passport {
 	var passports []*passport
-	common.ScanFile(common.GetInputFilePath(), func(token string) bool {
+	addPassport := func(token string) {
 		passport := parsePassport(token)
 		passports = append(passports, passport)
-		return true
-	}, common.SplitRecordsFunc)
+		return
+	}
+	common.ScanFile(common.GetInputFilePath(), common.AllTokensFunc(addPassport), common.SplitRecordsFunc)
 
 	return passports
 }
