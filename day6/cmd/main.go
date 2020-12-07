@@ -22,29 +22,22 @@ func scanQuestionsFile(path string) (int, int) {
 	return totalUnique, totalEveryone
 }
 
-func parseGroup(data string) (int, int) {
+func parseGroup(group string) (int, int) {
 	// whitespace should separate each person
-	peoplesAnswers := strings.Fields(data)
+	peoplesAnswers := strings.Fields(group)
 	numPeople := len(peoplesAnswers)
 
 	// Find unique questions
-	uniqueQuestions := map[rune]struct{}{}
+	uniqueQuestions := make(map[rune]int) // count of people per question
 	for i := 0; i < numPeople; i++ {
 		for _, c := range peoplesAnswers[i] {
-			uniqueQuestions[c] = struct{}{}
+			uniqueQuestions[c]++
 		}
 	}
 
 	// Find questions that everyone had
 	totalEveryone := 0
-	for question := range uniqueQuestions {
-		count := 0
-		for i := 0; i < numPeople; i++ {
-			if strings.ContainsRune(peoplesAnswers[i], question) {
-				count++
-			}
-		}
-
+	for _, count := range uniqueQuestions {
 		if count == numPeople {
 			totalEveryone++
 		}
