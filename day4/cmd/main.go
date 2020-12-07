@@ -1,75 +1,28 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/torbensky/adventofcode2020/common"
 )
 
 type passport struct {
 	data map[string]string
 }
 
-// splitPassports splits on two consecutive, empty lines
-// ignores "\r" carriage returns (so "\n\r\n" or even "\n\r\r\r\r...\n" will delimit tokens)
-func splitPassports(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	// End of file, and no data/token left
-	if atEOF && len(data) == 0 {
-		return 0, nil, nil
-	}
-
-	// Check for token delim
-	index := 0
-	consecutiveNewLines := 0
-	for ; index < len(data); index++ {
-		switch data[index] {
-		case '\n':
-			consecutiveNewLines++
-		case '\r':
-			// ignore
-		default:
-			consecutiveNewLines = 0
-		}
-
-		// found token delim
-		if consecutiveNewLines == 2 {
-			// Note: may contain "\r" somewhere
-			return index + 1, data[:index-1], nil
-		}
-	}
-
-	// End of file, remaining data should be a token
-	if atEOF {
-		return len(data), data, nil
-	}
-
-	// Need MOAR
-	return 0, nil, nil
-}
-
 // Loads a list of passports from a file
 func loadPassportsData(path string) []*passport {
-	file, err := os.Open(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	scanner.Split(splitPassports)
-
 	var passports []*passport
-	for scanner.Scan() {
-		passport := parsePassport(scanner.Text())
+	common.ScanFile(common.GetInputFilePath(), func(token string) bool {
+		passport := parsePassport(token)
 		passports = append(passports, passport)
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
+		return true
+	}, common.SplitRecordsFunc)
 
 	return passports
 }
@@ -118,7 +71,7 @@ func (p *passport) isValid() bool {
 		{"eyr", 2020, 2030},
 	} {
 		year, err := strconv.Atoi(p.data[yearValidation.field])
-		mustNotError(err)
+		common.MustNotError(err)
 		if year < yearValidation.min || year > yearValidation.max {
 			logInvalid(p, yearValidation.field)
 			return false
@@ -133,7 +86,7 @@ func (p *passport) isValid() bool {
 	}
 
 	height, err := strconv.Atoi(heightMatch[1])
-	mustNotError(err)
+	common.MustNotError(err)
 	if heightMatch[2] == "cm" {
 		if height < 150 || height > 193 {
 			logInvalid(p, "hgt")
@@ -213,10 +166,4 @@ func logInvalid(p *passport, field string) {
 	fmt.Printf("\tfield:\t%s\t%s\n\n", field, p.data[field])
 	fmt.Printf("\tdata:\t%v\n", p.data)
 	fmt.Println("=================================================================================================================")
-}
-
-func mustNotError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
 }

@@ -1,70 +1,23 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"strings"
+
+	"github.com/torbensky/adventofcode2020/common"
 )
-
-// splitRecords splits on two consecutive, empty lines
-// ignores "\r" carriage returns (so "\n\r\n" or even "\n\r\r\r\r...\n" will delimit tokens)
-func splitRecords(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	// End of file, and no data/token left
-	if atEOF && len(data) == 0 {
-		return 0, nil, nil
-	}
-
-	// Check for token delim
-	index := 0
-	consecutiveNewLines := 0
-	for ; index < len(data); index++ {
-		switch data[index] {
-		case '\n':
-			consecutiveNewLines++
-		case '\r':
-			// ignore
-		default:
-			consecutiveNewLines = 0
-		}
-
-		// found token delim
-		if consecutiveNewLines == 2 {
-			// Note: may contain "\r" somewhere
-			return index + 1, data[:index-1], nil
-		}
-	}
-
-	// End of file, remaining data should be a token
-	if atEOF {
-		return len(data), data, nil
-	}
-
-	// Need MOAR
-	return 0, nil, nil
-}
 
 // Scans the questions file and returns counts
 func scanQuestionsFile(path string) (int, int) {
-	file, err := os.Open(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-	scanner.Split(splitRecords)
-
 	totalUnique, totalEveryone := 0, 0
-	for scanner.Scan() {
-		u, e := parseGroup(scanner.Text())
+	common.ScanFile(common.GetInputFilePath(), func(token string) bool {
+		u, e := parseGroup(token)
 		totalUnique += u
 		totalEveryone += e
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
+		return true
+	}, common.SplitRecordsFunc)
 
 	return totalUnique, totalEveryone
 }
