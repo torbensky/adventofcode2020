@@ -1,40 +1,26 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/torbensky/adventofcode2020/common"
 )
 
 var lineRegex = regexp.MustCompile(`^(\d+)-(\d+) (\w): (\w+)$`)
 
 func main() {
 
-	// Validate program usage
-
-	if len(os.Args) != 2 {
-		log.Fatal("This command accepts only one argument: the path to the input file")
-	}
-	file, err := os.Open(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	// Scan passwords file and check validation
-
 	validPart1Count := 0
 	validPart2Count := 0
-	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-
+	// Scan passwords file and check validation
+	common.ScanFile(common.GetInputFilePath(), func(line string) bool {
 		// Parse out the data
 
-		policy, password, err := processLine(scanner.Text())
+		policy, password, err := processLine(line)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -48,11 +34,8 @@ func main() {
 		if validatePart2(password, policy) {
 			validPart2Count++
 		}
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
+		return true
+	}, nil)
 
 	// RESULTS!
 
