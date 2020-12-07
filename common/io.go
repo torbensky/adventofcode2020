@@ -5,14 +5,25 @@ import (
 	"log"
 )
 
-// TokenFunc is a callback function used by ScanTokens
+// StoppableTokenFunc is a callback function used by ScanTokens
 //
 // return true to continue, false to stop processing further tokens
-type TokenFunc func(token string) bool
+//
+type StoppableTokenFunc func(token string) bool
+
+// AllTokensFunc is an implementation of the StoppableTokenFunc that never wants to stop
+//
+func AllTokensFunc(fn func(token string)) StoppableTokenFunc {
+	return func(token string) bool {
+		fn(token)
+		return true
+	}
+}
 
 // ScanTokens scans every token in the scanner, invoking the callback on each one
 // stops either when the end of file is reached or when the callback returns false
-func ScanTokens(scanner *bufio.Scanner, fn TokenFunc) {
+//
+func ScanTokens(scanner *bufio.Scanner, fn StoppableTokenFunc) {
 	for scanner.Scan() {
 		if !fn(scanner.Text()) {
 			break

@@ -11,24 +11,25 @@ import (
 
 func main() {
 
-	// Scan in numeric data
+	// Scans in numeric data
 	var viableValues []int
-	common.ScanFile(common.GetInputFilePath(), func(line string) bool {
+	processLine := func(line string) {
 		val, err := strconv.Atoi(line)
 		if err != nil {
 			log.Printf("unable to parse integer - skipping line '%s'\n", line)
-			return true
+			return
 		}
 
 		// Don't consider values > 2020
 		if val > 2020 {
-			return true
+			return
 		}
 		viableValues = append(viableValues, val)
-		return true
-	}, nil)
+	}
+	common.ScanLines(common.GetInputFilePath(), common.AllTokensFunc(processLine))
 
-	sort.Ints(viableValues) // sort required for solution algorithms
+	// sort required for solution algorithms
+	sort.Ints(viableValues)
 
 	// Find the pair that sums to 2020
 	val1, val2, err := solvePart1(viableValues)

@@ -35,7 +35,7 @@ func GetInputFilePath() string {
 //
 // It scans each line in a file
 //
-func ScanLines(path string, fn TokenFunc) {
+func ScanLines(path string, fn StoppableTokenFunc) {
 	ScanFile(path, fn, nil)
 }
 
@@ -43,7 +43,7 @@ func ScanLines(path string, fn TokenFunc) {
 //
 // by default, each token is the contents of a single line (a line scanning function)
 //
-func ScanFile(path string, fn TokenFunc, splitFn bufio.SplitFunc) {
+func ScanFile(path string, fn StoppableTokenFunc, splitFn bufio.SplitFunc) {
 	file := openFile(path)
 	defer file.Close()
 
@@ -58,10 +58,9 @@ func ScanFile(path string, fn TokenFunc, splitFn bufio.SplitFunc) {
 // ReadStringLines reads all the newline separated lines into a string buffer
 func ReadStringLines(path string) []string {
 	var lines []string
-	ScanFile(path, func(line string) bool {
+	ScanLines(path, AllTokensFunc(func(line string) {
 		lines = append(lines, line)
-		return true
-	}, nil)
+	}))
 
 	return lines
 }
