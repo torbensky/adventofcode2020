@@ -82,7 +82,9 @@ func loadData(path string) boardingPassList {
 		})
 
 	}
-	common.ScanLines(common.GetInputFilePath(), common.AllTokensFunc(addPass))
+	file := common.OpenInputFile()
+	defer file.Close()
+	common.ScanLines(file, addPass)
 
 	return passes
 }
