@@ -1,11 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"sort"
+
+	"github.com/torbensky/adventofcode2020/common"
 )
 
 // represents a numeric range [lower,upper]
@@ -47,19 +48,12 @@ func (s boardingPassList) Less(i, j int) bool {
 }
 
 func loadData(path string) boardingPassList {
-	file, err := os.Open(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
 
 	var passes boardingPassList
-	for scanner.Scan() {
+	common.ScanLines(common.GetInputFilePath(), func(line string) bool {
 		rowRange := numRange{lower: 0, upper: 127}
 		colRange := numRange{lower: 0, upper: 7}
 
-		line := scanner.Text()
 		for i, c := range line {
 			if i < 7 {
 				lower, upper := splitRange(rowRange)
@@ -85,11 +79,9 @@ func loadData(path string) boardingPassList {
 			column: colRange.lower,
 			seatID: rowRange.lower*8 + colRange.lower,
 		})
-	}
 
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
+		return true
+	})
 
 	return passes
 }

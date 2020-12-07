@@ -1,10 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/torbensky/adventofcode2020/common"
 )
 
 // The rune that indicates a tree tile on the map
@@ -15,21 +16,7 @@ var fileLines []string
 
 // loads an entire file into our buffer of lines and returns the map dimensions (width,height)
 func loadFile(path string) (int, int) {
-	file, err := os.Open(path)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		fileLines = append(fileLines, scanner.Text())
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-
+	fileLines = common.ReadStringLines(path)
 	return len(fileLines[0]), len(fileLines)
 }
 

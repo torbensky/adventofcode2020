@@ -1,48 +1,32 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"log"
-	"os"
 	"sort"
 	"strconv"
+
+	"github.com/torbensky/adventofcode2020/common"
 )
 
 func main() {
 
-	// Validate program usage
-
-	if len(os.Args) != 2 {
-		log.Fatal("This command accepts only one argument: the path to the input file")
-	}
-	file, err := os.Open(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
 	// Scan in numeric data
-
-	scanner := bufio.NewScanner(file)
 	var viableValues []int
-	for scanner.Scan() {
-		val, err := strconv.Atoi(scanner.Text())
+	common.ScanFile(common.GetInputFilePath(), func(line string) bool {
+		val, err := strconv.Atoi(line)
 		if err != nil {
-			log.Printf("unable to parse integer - skipping line '%s'\n", scanner.Text())
-			continue
+			log.Printf("unable to parse integer - skipping line '%s'\n", line)
+			return true
 		}
 
 		// Don't consider values > 2020
 		if val > 2020 {
-			continue
+			return true
 		}
 		viableValues = append(viableValues, val)
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
+		return true
+	}, nil)
 
 	sort.Ints(viableValues) // sort required for solution algorithms
 
