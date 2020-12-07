@@ -34,7 +34,9 @@ func main() {
 			validPart2Count++
 		}
 	}
-	common.ScanLines(common.GetInputFilePath(), common.AllTokensFunc(scanFn))
+	file := common.OpenInputFile()
+	defer file.Close()
+	common.ScanLines(file, scanFn)
 
 	// RESULTS!
 

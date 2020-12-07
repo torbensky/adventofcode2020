@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/torbensky/adventofcode2020/common"
 )
@@ -14,9 +13,11 @@ const tree = '#'
 // Buffer to store each line of a file
 var fileLines []string
 
-// loads an entire file into our buffer of lines and returns the map dimensions (width,height)
-func loadFile(path string) (int, int) {
-	fileLines = common.ReadStringLines(path)
+// loads map data from the file and returns the map dimensions (width,height)
+func loadMapData() (int, int) {
+	file := common.OpenInputFile()
+	defer file.Close()
+	fileLines = common.ReadStringLines(file)
 	return len(fileLines[0]), len(fileLines)
 }
 
@@ -37,12 +38,7 @@ func getMapTile(x, y int) (rune, error) {
 }
 
 func main() {
-
-	// Validate program usage
-	if len(os.Args) != 2 {
-		log.Fatal("This command accepts only one argument: the path to the input file")
-	}
-	width, height := loadFile(os.Args[1])
+	width, height := loadMapData()
 
 	// Part 1
 
