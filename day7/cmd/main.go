@@ -55,7 +55,7 @@ func main() {
 	}
 
 	// Count the number of inner bags
-	numBagsInside := countAllInnerBags(bagRules, "shiny gold") - 1
+	numBagsInside := countAllInnerBags(bagRules, "shiny gold")
 
 	fmt.Println()
 	fmt.Printf("Part 1 - Total %d\n\n", totalWithShinyGold)
@@ -90,9 +90,9 @@ func countAllInnerBags(rules map[string]*bagRule, bagType string) int {
 		return 0
 	}
 
-	total := 1
+	total := 0
 	for bt, count := range rules[bagType].contains {
-		total += count * countAllInnerBags(rules, bt)
+		total += count + count*countAllInnerBags(rules, bt)
 	}
 
 	return total
