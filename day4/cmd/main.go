@@ -30,7 +30,7 @@ func loadPassportsData(path string) []*passport {
 // Parses a passport from a chunk of text
 func parsePassport(raw string) *passport {
 	parsed := passport{
-		data: map[string]string{},
+		data: make(map[string]string),
 	}
 	pairs := strings.Fields(raw)
 	for _, pair := range pairs {
