@@ -15,6 +15,14 @@ type bagRule struct {
 }
 
 func main() {
+	bagRules := loadRules(common.GetInputFilePath())
+
+	fmt.Println()
+	fmt.Printf("Part 1 - Total %d\n\n", calcPart1(bagRules))
+	fmt.Printf("Part 2 - Total %d\n\n", countAllInnerBags(bagRules, "shiny gold"))
+}
+
+func loadRules(filePath string) map[string]*bagRule {
 	bagRules := make(map[string]*bagRule)
 	parseRuleLine := func(line string) {
 		words := strings.Fields(line)
@@ -41,11 +49,18 @@ func main() {
 			newRule.contains[innerBag] = numBags
 		}
 
-		bagRules[outerBag] = newRule
+		// Only add rules that are not dead-ends
+		if len(newRule.contains) > 0 {
+			bagRules[outerBag] = newRule
+		}
 	}
 
-	common.ScanLines(common.GetInputFilePath(), common.AllTokensFunc(parseRuleLine))
+	common.ScanLines(filePath, common.AllTokensFunc(parseRuleLine))
 
+	return bagRules
+}
+
+func calcPart1(bagRules map[string]*bagRule) int {
 	// Count the total number of ways to have shiny gold bags
 	totalWithShinyGold := 0
 	for bt := range bagRules {
@@ -53,15 +68,10 @@ func main() {
 			totalWithShinyGold++
 		}
 	}
-
-	// Count the number of inner bags
-	numBagsInside := countAllInnerBags(bagRules, "shiny gold")
-
-	fmt.Println()
-	fmt.Printf("Part 1 - Total %d\n\n", totalWithShinyGold)
-	fmt.Printf("Part 2 - Total %d\n\n", numBagsInside)
+	return totalWithShinyGold
 }
 
+// Checks whether a given bag is allowed to contain the target bag
 func canContain(rules map[string]*bagRule, outerBag, targetBag string) bool {
 	// base condition, can we go further?
 	if rules[outerBag] == nil {
@@ -84,6 +94,7 @@ func canContain(rules map[string]*bagRule, outerBag, targetBag string) bool {
 	return false
 }
 
+// Count the number of inner bags that must be within the given bag type
 func countAllInnerBags(rules map[string]*bagRule, bagType string) int {
 	// Base condition
 	if rules[bagType] == nil {
