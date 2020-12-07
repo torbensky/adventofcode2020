@@ -23,7 +23,9 @@ func loadPassportsData(path string) []*passport {
 		passports = append(passports, passport)
 		return
 	}
-	common.ScanFile(common.GetInputFilePath(), common.AllTokensFunc(addPassport), common.SplitRecordsFunc)
+	file := common.OpenInputFile()
+	defer file.Close()
+	common.ScanSplit(file, addPassport, common.SplitRecordsFunc)
 
 	return passports
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"strconv"
 	"strings"
@@ -15,14 +16,14 @@ type bagRule struct {
 }
 
 func main() {
-	bagRules := loadRules(common.GetInputFilePath())
+	bagRules := loadRules(common.OpenInputFile())
 
 	fmt.Println()
 	fmt.Printf("Part 1 - Total %d\n\n", calcPart1(bagRules))
 	fmt.Printf("Part 2 - Total %d\n\n", countAllInnerBags(bagRules, "shiny gold"))
 }
 
-func loadRules(filePath string) map[string]*bagRule {
+func loadRules(reader io.Reader) map[string]*bagRule {
 	bagRules := make(map[string]*bagRule)
 	parseRuleLine := func(line string) {
 		words := strings.Fields(line)
@@ -54,8 +55,7 @@ func loadRules(filePath string) map[string]*bagRule {
 			bagRules[outerBag] = newRule
 		}
 	}
-
-	common.ScanLines(filePath, common.AllTokensFunc(parseRuleLine))
+	common.ScanLines(reader, parseRuleLine)
 
 	return bagRules
 }

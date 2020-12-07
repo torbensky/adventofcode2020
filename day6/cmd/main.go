@@ -17,7 +17,9 @@ func scanQuestionsFile(path string) (int, int) {
 		totalUnique += u
 		totalEveryone += e
 	}
-	common.ScanFile(common.GetInputFilePath(), common.AllTokensFunc(countQuestions), common.SplitRecordsFunc)
+	file := common.OpenInputFile()
+	defer file.Close()
+	common.ScanSplit(file, countQuestions, common.SplitRecordsFunc)
 
 	return totalUnique, totalEveryone
 }

@@ -10,7 +10,6 @@ import (
 )
 
 func main() {
-
 	// Scans in numeric data
 	var viableValues []int
 	processLine := func(line string) {
@@ -26,7 +25,9 @@ func main() {
 		}
 		viableValues = append(viableValues, val)
 	}
-	common.ScanLines(common.GetInputFilePath(), common.AllTokensFunc(processLine))
+	file := common.OpenInputFile()
+	defer file.Close()
+	common.ScanLines(file, processLine)
 
 	// sort required for solution algorithms
 	sort.Ints(viableValues)

@@ -2,32 +2,47 @@ package common
 
 import (
 	"bufio"
+	"io"
 	"log"
 )
 
-// StoppableTokenFunc is a callback function used by ScanTokens
-//
-// return true to continue, false to stop processing further tokens
-//
-type StoppableTokenFunc func(token string) bool
+// TokenFunc is a callback function used by ScanTokens
+type TokenFunc func(token string)
 
-// AllTokensFunc is an implementation of the StoppableTokenFunc that never wants to stop
-//
-func AllTokensFunc(fn func(token string)) StoppableTokenFunc {
-	return func(token string) bool {
-		fn(token)
-		return true
-	}
+// ScanLines fully scans an input stream, emitting lines as tokens
+func ScanLines(reader io.Reader, fn TokenFunc) {
+	ScanAllTokens(bufio.NewScanner(reader), fn)
 }
 
-// ScanTokens scans every token in the scanner, invoking the callback on each one
-// stops either when the end of file is reached or when the callback returns false
+// ScanSplit scans a stream, emitting one token at a time
 //
-func ScanTokens(scanner *bufio.Scanner, fn StoppableTokenFunc) {
+// by default, each token is the contents of a single line (a line scanning function)
+//
+func ScanSplit(reader io.Reader, fn TokenFunc, splitFn bufio.SplitFunc) {
+	scanner := bufio.NewScanner(reader)
+	if splitFn != nil {
+		scanner.Split(splitFn)
+	}
+
+	ScanAllTokens(scanner, fn)
+}
+
+// ReadStringLines reads all the newline separated lines into a string buffer
+func ReadStringLines(reader io.Reader) []string {
+	var lines []string
+	ScanLines(reader, func(line string) {
+		lines = append(lines, line)
+	})
+
+	return lines
+}
+
+// ScanAllTokens scans every token in the scanner, invoking the callback on each one
+// stops when the end of reader is reached
+//
+func ScanAllTokens(scanner *bufio.Scanner, fn TokenFunc) {
 	for scanner.Scan() {
-		if !fn(scanner.Text()) {
-			break
-		}
+		fn(scanner.Text())
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -41,7 +56,7 @@ func ScanTokens(scanner *bufio.Scanner, fn StoppableTokenFunc) {
 // Note: ignores "\r" carriage returns (so "\n\r\n" or even "\n\r\r\r\r...\n" will delimit tokens)
 //
 func SplitRecordsFunc(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	// End of file, and no data/token left
+	// End of stream, and no data/token left
 	if atEOF && len(data) == 0 {
 		return 0, nil, nil
 	}
