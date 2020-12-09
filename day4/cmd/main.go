@@ -16,8 +16,8 @@ type passport struct {
 }
 
 // Loads a list of passports from a file
-func loadPassportsData(path string) []*passport {
-	var passports []*passport
+func loadPassportsData(path string) []passport {
+	var passports []passport
 	addPassport := func(token string) {
 		passport := parsePassport(token)
 		passports = append(passports, passport)
@@ -31,7 +31,7 @@ func loadPassportsData(path string) []*passport {
 }
 
 // Parses a passport from a chunk of text
-func parsePassport(raw string) *passport {
+func parsePassport(raw string) passport {
 	parsed := passport{
 		data: make(map[string]string),
 	}
@@ -41,7 +41,7 @@ func parsePassport(raw string) *passport {
 		parsed.data[passKeyVal[0]] = passKeyVal[1]
 	}
 
-	return &parsed
+	return parsed
 }
 
 // Required passport fields
