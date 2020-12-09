@@ -34,7 +34,7 @@ func main() {
 }
 
 // Fixes the program according to Part 2
-func fixProgram(instructions []*instruction) int {
+func fixProgram(instructions []instruction) int {
 	for i, inst := range instructions {
 		var new, old operator
 		switch inst.op {
@@ -56,7 +56,7 @@ func fixProgram(instructions []*instruction) int {
 }
 
 // Patches the program and executes that, returning the result
-func executePatch(instructions []*instruction, patchIdx int, newOp, oldOp operator) (bool, int) {
+func executePatch(instructions []instruction, patchIdx int, newOp, oldOp operator) (bool, int) {
 	instructions[patchIdx].op = newOp
 	looped, acc := executeProgram(instructions)
 	instructions[patchIdx].op = oldOp
@@ -65,7 +65,7 @@ func executePatch(instructions []*instruction, patchIdx int, newOp, oldOp operat
 
 // executes a program, halting if an infinite loop is detected
 // returns true/false depending on whether a loop was found and the value left in the accumulator
-func executeProgram(instructions []*instruction) (bool, int) {
+func executeProgram(instructions []instruction) (bool, int) {
 	acc := 0
 	i := 0
 	executed := make(map[int]struct{})
@@ -95,9 +95,9 @@ func executeProgram(instructions []*instruction) (bool, int) {
 }
 
 // Loads a program from some data stream
-func loadProgram(reader io.Reader) []*instruction {
+func loadProgram(reader io.Reader) []instruction {
 
-	var instructions []*instruction
+	var instructions []instruction
 
 	parseLine := func(line string) {
 
