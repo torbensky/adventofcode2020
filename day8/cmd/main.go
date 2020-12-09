@@ -102,7 +102,7 @@ func loadProgram(reader io.Reader) []instruction {
 	parseLine := func(line string) {
 
 		fields := strings.Fields(line)
-		instruction := &instruction{
+		instruction := instruction{
 			// NOTE: in the real world, probably should validate this input. But meh for this :P
 			op: operator(fields[0]),
 		}
