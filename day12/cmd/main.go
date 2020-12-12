@@ -8,14 +8,21 @@ import (
 	"github.com/torbensky/adventofcode2020/common"
 )
 
-type direction byte
+type direction int
 
 const (
-	north direction = 'N'
-	east  direction = 'E'
-	south direction = 'S'
-	west  direction = 'W'
+	east direction = iota
+	north
+	west
+	south
 )
+
+var headingNames = map[direction]byte{
+	east:  'E',
+	north: 'N',
+	west:  'W',
+	south: 'S',
+}
 
 type action byte
 
@@ -161,33 +168,20 @@ func (s *ship) rotateHeading(left bool, degrees int) {
 }
 
 func rotate90(heading direction, left bool) direction {
-	switch heading {
-	case north:
-		if left {
-			return west
-		}
-		return east
-	case south:
-		if left {
-			return east
-		}
-		return west
-	case west:
-		if left {
-			return south
-		}
-		return north
-	case east:
-		if left {
-			return north
-		}
-		return south
+	if left {
+		return (heading + 1) % 4
 	}
-	panic("unhandled rotation case")
+
+	next := heading - 1
+	if next < 0 {
+		next = south
+	}
+
+	return next
 }
 
 func (s *ship) print() {
-	fmt.Printf("heading=%s north=%d east=%d waypoint[n=%d,e=%d]\n", string(s.heading), s.position.n, s.position.e, s.waypoint.n, s.waypoint.e)
+	fmt.Printf("heading=%c north=%d east=%d waypoint[n=%d,e=%d]\n", headingNames[s.heading], s.position.n, s.position.e, s.waypoint.n, s.waypoint.e)
 }
 
 func (s *ship) rotateWaypoint(left bool, degrees int) {
@@ -202,11 +196,17 @@ func (s *ship) rotateWaypoint(left bool, degrees int) {
 }
 
 func (s *ship) fly(p pilot, a action, val int) {
+
 	if s.debug {
+		// Print instruction issued
 		fmt.Printf("%s%d\n", string(a), val)
 	}
+
+	// Pilot follows instructions
 	p(s, a, val)
+
 	if s.debug {
+		// Print next ship state
 		s.print()
 	}
 }
