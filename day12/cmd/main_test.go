@@ -29,6 +29,30 @@ func TestPart2(t *testing.T) {
 	}
 }
 
+func TestRotate90(t *testing.T) {
+	for _, testRot := range []struct {
+		initial  direction
+		left     bool
+		expected direction
+	}{
+		// Left
+		{north, true, west},
+		{west, true, south},
+		{south, true, east},
+		{east, true, north},
+		// Right
+		{north, false, east},
+		{west, false, north},
+		{south, false, west},
+		{east, false, south},
+	} {
+		got := rotate90(testRot.initial, testRot.left)
+		if got != testRot.expected {
+			t.Errorf("initial %c, rotate left=%t wanted %c, got %c\n", headingNames[testRot.initial], testRot.left, headingNames[testRot.expected], headingNames[got])
+		}
+	}
+}
+
 func openTestInput(t *testing.T) *os.File {
 	file, err := os.Open("../test-input.txt")
 	if err != nil {
