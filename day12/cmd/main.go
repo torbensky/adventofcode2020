@@ -20,13 +20,13 @@ const (
 type action byte
 
 const (
-	flyNorth action = 'N'
-	flyEast  action = 'E'
-	flySouth action = 'S'
-	flyWest  action = 'W'
-	left     action = 'L'
-	right    action = 'R'
-	forward  action = 'F'
+	flyNorth    action = 'N'
+	flyEast     action = 'E'
+	flySouth    action = 'S'
+	flyWest     action = 'W'
+	rotateLeft  action = 'L'
+	rotateRight action = 'R'
+	moveForward action = 'F'
 )
 
 type coord struct {
@@ -68,18 +68,18 @@ type pilot func(s *ship, a action, val int)
 func part1Pilot(s *ship, a action, val int) {
 	switch a {
 	case flyNorth:
-		s.reposition(val, 0)
+		s.move(val, 0)
 	case flySouth:
-		s.reposition(-val, 0)
+		s.move(-val, 0)
 	case flyEast:
-		s.reposition(0, val)
+		s.move(0, val)
 	case flyWest:
-		s.reposition(0, -val)
-	case left:
+		s.move(0, -val)
+	case rotateLeft:
 		s.rotateHeading(true, val)
-	case right:
+	case rotateRight:
 		s.rotateHeading(false, val)
-	case forward:
+	case moveForward:
 		s.moveForward(val)
 	}
 }
@@ -94,13 +94,13 @@ func part2Pilot(s *ship, a action, val int) {
 		s.moveWaypoint(0, val)
 	case flyWest:
 		s.moveWaypoint(0, -val)
-	case left:
+	case rotateLeft:
 		// rotate waypoint left
 		s.rotateWaypoint(true, val)
-	case right:
+	case rotateRight:
 		// rotate waypoint east
 		s.rotateWaypoint(false, val)
-	case forward:
+	case moveForward:
 		// move ship waypoint amount
 		s.moveToWaypoint(val)
 	}
@@ -135,7 +135,7 @@ func newShip(debug bool) ship {
 	}
 }
 
-func (s *ship) reposition(n, e int) {
+func (s *ship) move(n, e int) {
 	s.position.n += n
 	s.position.e += e
 }
