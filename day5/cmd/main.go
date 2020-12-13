@@ -6,7 +6,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/torbensky/adventofcode2020/common"
+	common "github.com/torbensky/adventofcode-common"
 )
 
 // represents a numeric range [lower,upper]
