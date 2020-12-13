@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/torbensky/adventofcode2020/common"
+	common "github.com/torbensky/adventofcode-common"
 )
 
 type cell = byte

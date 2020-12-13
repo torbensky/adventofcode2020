@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/torbensky/adventofcode2020/common"
+	common "github.com/torbensky/adventofcode-common"
 )
 
 var lineRegex = regexp.MustCompile(`^(\d+)-(\d+) (\w): (\w+)$`)
