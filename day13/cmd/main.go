@@ -68,28 +68,6 @@ func part2(reader io.Reader) int64 {
 	result, err := crt(a, n)
 	common.MustNotError(err)
 	return result.Int64()
-
-	// for {
-	// 	runBus(busList[0])
-
-	// 	for i := 1; i < len(busList); i++ {
-	// 		runBusToClosest(busList[i], busList[0].time)
-	// 	}
-
-	// 	scheduleWorks := true
-	// 	for i := 1; i < len(busList); i++ {
-	// 		baseTime := busList[0].time
-	// 		timeDiff := busList[i].time - baseTime
-	// 		if timeDiff != busList[i].order {
-	// 			scheduleWorks = false
-	// 			break
-	// 		}
-	// 	}
-
-	// 	if scheduleWorks {
-	// 		return busList[0].time
-	// 	}
-	// }
 }
 
 var one = big.NewInt(1)
@@ -111,22 +89,3 @@ func crt(a, n []*big.Int) (*big.Int, error) {
 	}
 	return x.Mod(&x, p), nil
 }
-
-// func runBusses(busses []*bus) {
-// 	for _, bus := range busses {
-// 		bus.time += bus.num
-// 	}
-// }
-
-// func runBus(bus *bus) {
-// 	bus.time += bus.num
-// }
-
-// func runBusToClosest(bus *bus, time int) {
-// 	newTime := time / bus.num
-// 	newTime *= bus.num
-// 	if newTime < time {
-// 		newTime += bus.num
-// 	}
-// 	bus.time = newTime
-// }
