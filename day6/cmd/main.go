@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/torbensky/adventofcode2020/common"
+	common "github.com/torbensky/adventofcode-common"
 )
 
 // Scans the questions file and returns counts

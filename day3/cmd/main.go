@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/torbensky/adventofcode2020/common"
+	common "github.com/torbensky/adventofcode-common"
 )
 
 // The rune that indicates a tree tile on the map
