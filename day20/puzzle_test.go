@@ -27,20 +27,140 @@ func TestArrangement(t *testing.T) {
 	}
 }
 
-func TestAlignTiles(t *testing.T) {
-	tiles := loadTestTiles(t)
-	tiles[1427].alignTo(tiles[2311], topEdge)
-	if tiles[2311].Edges[topEdge] != tiles[1427].Edges[bottomEdge] {
-		t.Fatal("t2311 top != t1427 bottom")
+func TestImageFlip(t *testing.T) {
+	img := Image{
+		[]byte{'1', '2', '3'},
+		[]byte{'4', '5', '6'},
+		[]byte{'7', '8', '9'},
+	}
+	img.FlipX()
+	imgF := Image{
+		[]byte{'7', '8', '9'},
+		[]byte{'4', '5', '6'},
+		[]byte{'1', '2', '3'},
+	}
+	if !img.compare(imgF) {
+		t.Logf("expected:\n%s", imgF)
+		t.Logf("got:\n%s", img)
+		t.Fatal("img flipX failed")
 	}
 
-	t.Log("pre align:\n", tiles[3079].String())
+	img.FlipY()
+	imgF = Image{
+		[]byte{'9', '8', '7'},
+		[]byte{'6', '5', '4'},
+		[]byte{'3', '2', '1'},
+	}
+	if !img.compare(imgF) {
+		t.Logf("expected:\n%s", imgF)
+		t.Logf("got:\n%s", img)
+		t.Fatal("img flipY failed")
+	}
+}
+
+func TestImageRotate(t *testing.T) {
+	img := Image{
+		[]byte{'1', '2', '3'},
+		[]byte{'4', '5', '6'},
+		[]byte{'7', '8', '9'},
+	}
+	img.Rotate90()
+	imgR := Image{
+		[]byte{'7', '4', '1'},
+		[]byte{'8', '5', '2'},
+		[]byte{'9', '6', '3'},
+	}
+	if !img.compare(imgR) {
+		t.Logf("expected:\n%s", imgR)
+		t.Logf("got:\n%s", img)
+		t.Fatal("img rotate90 failed")
+	}
+
+	img.Rotate90()
+	imgR = Image{
+		[]byte{'9', '8', '7'},
+		[]byte{'6', '5', '4'},
+		[]byte{'3', '2', '1'},
+	}
+	if !img.compare(imgR) {
+		t.Logf("expected:\n%s", imgR)
+		t.Logf("got:\n%s", img)
+		t.Fatal("img rotate90 failed")
+	}
+
+	img.Rotate90()
+	img.Rotate90()
+	imgR = Image{
+		[]byte{'1', '2', '3'},
+		[]byte{'4', '5', '6'},
+		[]byte{'7', '8', '9'},
+	}
+	if !img.compare(imgR) {
+		t.Logf("expected:\n%s", imgR)
+		t.Logf("got:\n%s", img)
+		t.Fatal("img rotate90 failed")
+	}
+}
+
+func TestAlignTiles(t *testing.T) {
+	tiles := loadTestTiles(t)
+	/*
+
+		1951    2311    3079
+		2729    1427    2473
+		2971    1489    1171
+
+		Tile 1427:
+		###.##.#..
+		.#..#.##..
+		.#.##.#..#
+		#.#.#.##.#
+		....#...##
+		...##..##.
+		...#.#####
+		.#.####.#.
+		..#..###.#
+		..##.#..#.
+
+	*/
+	tiles[1427].FlipX()
+	t.Logf("matching to center tile 1427...\n%s", tiles[1427])
+
+	// tiles[1427].alignTo(tiles[2311], topEdge)
+	// if tiles[2311].Edges[topEdge] != tiles[1427].Edges[bottomEdge] {
+	// 	t.Fatal("t2311 top != t1427 bottom")
+	// }
+
+	tiles[2311].alignTo(tiles[1427], topEdge)
+	if !tiles[2311].Edges[bottomEdge].Match(tiles[1427].Edges[topEdge]) {
+		t.Logf("2311:\n%s", tiles[2311])
+		t.Fatal("2311 failed to align to 1427")
+	}
+
+	tiles[2729].alignTo(tiles[1427], leftEdge)
+	if !tiles[2729].Edges[rightEdge].Match(tiles[1427].Edges[leftEdge]) {
+		t.Logf("2729:\n%s", tiles[2729])
+		t.Fatal("2729 failed to align to 1427")
+	}
+
+	tiles[2473].alignTo(tiles[1427], rightEdge)
+	if !tiles[2473].Edges[leftEdge].Match(tiles[1427].Edges[rightEdge]) {
+		t.Logf("2473:\n%s", tiles[2473])
+		t.Fatal("2473 failed to align to 1427")
+	}
+
+	tiles[1489].alignTo(tiles[1427], bottomEdge)
+	if !tiles[1489].Edges[topEdge].Match(tiles[1427].Edges[bottomEdge]) {
+		t.Logf("1489:\n%s", tiles[2729])
+		t.Fatal("1489 failed to align to 1427")
+	}
+
 	tiles[3079].alignTo(tiles[2311], rightEdge)
 	if tiles[2311].Edges[rightEdge] != tiles[3079].Edges[leftEdge] {
-		t.Log("post-align:\n", tiles[3079].String())
 		t.Log("aligned to:\n", tiles[2311].String())
 		t.Fatal("tiles[2311] right != tiles[3079] left\n")
 	}
+
 }
 
 func TestTileSet(t *testing.T) {
