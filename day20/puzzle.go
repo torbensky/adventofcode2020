@@ -223,13 +223,17 @@ func (t Tile) String() string {
 
 	sb.WriteString(t.Edges[topEdge].String())
 	sb.WriteByte('\n')
+
 	for i := 0; i < len(t.Image); i++ {
-		sb.WriteByte(le[i+1])
+		sb.WriteByte(le[len(le)-2-i])
+
 		sb.Write(t.Image[i])
 		sb.WriteByte(re[i+1])
+
 		sb.WriteByte('\n')
 	}
-	sb.WriteString(t.Edges[bottomEdge].String())
+
+	sb.WriteString(reverse(t.Edges[bottomEdge].String()))
 	sb.WriteByte('\n')
 
 	return sb.String()
@@ -268,7 +272,7 @@ func (t Tile) Rotate90N(rotations int) {
 
 // Rotate90 rotates the tile by 90 degrees
 func (t Tile) Rotate90() {
-	t.Edges[topEdge], t.Edges[rightEdge], t.Edges[bottomEdge], t.Edges[leftEdge] = t.Edges[leftEdge].flip(), t.Edges[topEdge], t.Edges[rightEdge].flip(), t.Edges[bottomEdge]
+	t.Edges[topEdge], t.Edges[rightEdge], t.Edges[bottomEdge], t.Edges[leftEdge] = t.Edges[leftEdge], t.Edges[topEdge], t.Edges[rightEdge], t.Edges[bottomEdge]
 	t.Image.Rotate90()
 }
 
@@ -299,12 +303,20 @@ func newTile(rows []string) Tile {
 		ID:    id,
 		Image: image,
 		Edges: []Edge{
-			newEdge(rows[0]),           // top
-			newEdge(re.String()),       // right
-			newEdge(rows[len(rows)-1]), // bottom
-			newEdge(le.String()),       // left
+			newEdge(rows[0]),                    // top
+			newEdge(re.String()),                // right
+			newEdge(reverse(rows[len(rows)-1])), // bottom
+			newEdge(reverse(le.String())),       // left
 		},
 	}
+}
+
+func reverse(s string) string {
+	runes := []rune(s)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	return string(runes)
 }
 
 type Edge struct {
