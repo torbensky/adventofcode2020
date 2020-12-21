@@ -3,6 +3,7 @@ package day20
 import (
 	"fmt"
 	"io"
+	"log"
 	"math"
 	"regexp"
 	"strings"
@@ -20,6 +21,23 @@ func (img Image) String() string {
 		sb.WriteString("\n")
 	}
 	return sb.String()
+}
+
+func (img Image) compare(other Image) bool {
+	if len(img) != len(other) {
+		return false
+	}
+	for y := 0; y < len(img); y++ {
+		if len(img[y]) != len(other[y]) {
+			return false
+		}
+		for x := 0; x < len(img[y]); x++ {
+			if img[y][x] != other[y][x] {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 type coord2d struct {
@@ -154,7 +172,7 @@ func emptyImage(size int) Image {
 	return img
 }
 
-func (img Image) FlipX() {
+func (img Image) FlipY() {
 	for _, row := range img {
 		for i := 0; i < len(row)/2; i++ {
 			// swap pieces
@@ -163,7 +181,7 @@ func (img Image) FlipX() {
 	}
 }
 
-func (img Image) FlipY() {
+func (img Image) FlipX() {
 	for i := 0; i < (len(img) / 2); i++ {
 		img[i], img[len(img)-1-i] = img[len(img)-1-i], img[i]
 	}
@@ -173,17 +191,20 @@ func (img Image) Rotate90() {
 	size := len(img)
 
 	// in-place matrix rotation
-	for x := 0; x < size/2; x++ {
-		for y := x; y < size-x-1; y++ {
+	for i := 0; i < size/2; i++ {
+		for j := i; j < size-i-1; j++ {
 
 			// rotate in batches of 4
 
-			temp := img[x][y]
+			temp := img[i][j]
 
-			img[x][y] = img[y][size-1-x]
-			img[y][size-1-x] = img[size-1-x][size-1-y]
-			img[size-1-x][size-1-y] = img[size-1-y][x]
-			img[size-1-y][x] = temp
+			img[i][j] = img[size-1-j][i]
+
+			img[size-1-j][i] = img[size-1-i][size-1-j]
+
+			img[size-1-i][size-1-j] = img[j][size-1-i]
+
+			img[j][size-1-i] = temp
 		}
 	}
 }
@@ -253,7 +274,7 @@ func (t Tile) FlipY() {
 // FlipX flips the tile over the x-axis
 func (t Tile) FlipX() {
 	// swap top/bottom edges
-	t.Edges[topEdge], t.Edges[bottomEdge] = t.Edges[bottomEdge], t.Edges[topEdge]
+	t.Edges[topEdge], t.Edges[bottomEdge] = t.Edges[bottomEdge].flip(), t.Edges[topEdge].flip()
 
 	t.Edges[leftEdge] = t.Edges[leftEdge].flip()
 	t.Edges[rightEdge] = t.Edges[rightEdge].flip()
@@ -263,8 +284,11 @@ func (t Tile) FlipX() {
 
 // Rotate90N performs a rotation N times
 func (t Tile) Rotate90N(rotations int) {
-	rotationsNeeded := (4 + rotations) % 4
-	// fmt.Printf("will rotate %d times\n", rotationsNeeded)
+	rotationsNeeded := rotations
+	if rotationsNeeded < 0 {
+		rotationsNeeded += 4
+	}
+	fmt.Printf("will rotate %d times\n", rotationsNeeded)
 	for i := 0; i < rotationsNeeded; i++ {
 		t.Rotate90()
 	}
@@ -512,15 +536,16 @@ func (t Tile) alignTo(other Tile, edge edgeType) {
 			e2 := other.Edges[j]
 
 			if e1.min() == e2.min() {
+				fmt.Println("edge match")
 				// rotate, if necessary
-				if i != j {
-					// log.Printf("tile %d needs rotations\n", t.ID)
-					t.Rotate90N(2 + int(i-j))
+				if i != (j+2)%4 {
+					log.Printf("tile %d needs rotations\n", t.ID)
+					t.Rotate90N(int(i - (j + 2)))
 				}
 
 				// flip, if necessary
 				if !e1.Match(e2) {
-					// log.Printf("tile %d needs flipping\n", t.ID)
+					log.Printf("tile %d needs flipping\n", t.ID)
 					switch i {
 					case topEdge, bottomEdge:
 						t.FlipY()
