@@ -3,7 +3,6 @@ package day20
 import (
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"regexp"
 	"strings"
@@ -261,7 +260,7 @@ func (t Tile) FlipX() {
 // Rotate90N performs a rotation N times
 func (t Tile) Rotate90N(rotations int) {
 	rotationsNeeded := (4 + rotations) % 4
-	fmt.Printf("will rotate %d times\n", rotationsNeeded)
+	// fmt.Printf("will rotate %d times\n", rotationsNeeded)
 	for i := 0; i < rotationsNeeded; i++ {
 		t.Rotate90()
 	}
@@ -269,16 +268,7 @@ func (t Tile) Rotate90N(rotations int) {
 
 // Rotate90 rotates the tile by 90 degrees
 func (t Tile) Rotate90() {
-
-	for i, e := range t.Edges {
-		fmt.Println(i, e)
-	}
-
-	t.Edges[topEdge], t.Edges[rightEdge], t.Edges[bottomEdge], t.Edges[leftEdge] = t.Edges[leftEdge].flip(), t.Edges[topEdge].flip(), t.Edges[rightEdge].flip(), t.Edges[bottomEdge].flip()
-	fmt.Println()
-	for i, e := range t.Edges {
-		fmt.Println(i, e)
-	}
+	t.Edges[topEdge], t.Edges[rightEdge], t.Edges[bottomEdge], t.Edges[leftEdge] = t.Edges[leftEdge].flip(), t.Edges[topEdge], t.Edges[rightEdge].flip(), t.Edges[bottomEdge]
 	t.Image.Rotate90()
 }
 
@@ -374,6 +364,48 @@ func (e Edge) Match(o Edge) bool {
 
 type Arrangement [][]Tile
 
+func (a Arrangement) String() string {
+
+	var sb strings.Builder
+	for y := range a {
+		for _, tile := range a[y] {
+			sb.WriteString(fmt.Sprintf("%d\t", tile.ID))
+		}
+		sb.WriteByte('\n')
+	}
+	return sb.String()
+	// // TODO: don't use hard-coded tile size
+	// tileSize := 10
+	// puzzleSize := len(a) * tileSize // assume square
+	// puzzle := make([][]byte, puzzleSize)
+	// for i := 0; i < puzzleSize; i++ {
+	// 	puzzle[i] = make([]byte, puzzleSize)
+	// }
+
+	// writeTile := func(t Tile, x, y int) {
+	// 	for ty, row := range strings.Split(t.String(), "\n") {
+	// 		for tx := range row {
+	// 			fmt.Printf("write char %d,%d\n", x+tx, y+ty)
+	// 			puzzle[y+ty][x+tx] = row[tx]
+	// 		}
+	// 	}
+	// }
+
+	// for y := range a {
+	// 	for x, tile := range a[y] {
+	// 		fmt.Printf("write tile %d,%d\n", x, y)
+	// 		writeTile(tile, x*10, y*10)
+	// 	}
+	// }
+
+	// var sb strings.Builder
+	// for _, line := range puzzle {
+	// 	sb.Write(line)
+	// 	sb.WriteByte('\n')
+	// }
+	// return sb.String()
+}
+
 func min(a, b int) int {
 	if a < b {
 		return a
@@ -392,17 +424,40 @@ func (ts TileSet) getMinEdges() map[int]int {
 }
 
 type tileGroups struct {
-	CornerTiles     TileSet
-	OneEdgeOutTiles TileSet
-	InteriorTiles   TileSet
+	CornerTiles    TileSet
+	PerimeterTiles TileSet
+	InteriorTiles  TileSet
 }
 
+func (ts TileSet) pickOne() *Tile {
+	for _, t := range ts {
+		return &t
+	}
+	return nil
+}
+
+// GetTileGroups assumes a square NxN group of tiles
 func (ts TileSet) GetTileGroups() tileGroups {
 	result := tileGroups{
-		CornerTiles:     make(TileSet),
-		OneEdgeOutTiles: make(TileSet),
-		InteriorTiles:   make(TileSet),
+		CornerTiles:    make(TileSet),
+		PerimeterTiles: make(TileSet),
+		InteriorTiles:  make(TileSet),
 	}
+
+	if len(ts) == 0 {
+		return result
+	}
+
+	if len(ts) == 1 {
+		t := ts.pickOne()
+
+		// In this case the tile is everything
+		result.CornerTiles[t.ID] = *t
+		result.InteriorTiles[t.ID] = *t
+		result.PerimeterTiles[t.ID] = *t
+		return result
+	}
+
 	uniqueMinEdges := ts.getMinEdges()
 	// Find corner tiles
 	for _, t := range ts {
@@ -415,9 +470,10 @@ func (ts TileSet) GetTileGroups() tileGroups {
 		}
 		switch exteriorCount {
 		case 1:
-			result.OneEdgeOutTiles[t.ID] = t
+			result.PerimeterTiles[t.ID] = t
 		case 2:
 			result.CornerTiles[t.ID] = t
+			result.PerimeterTiles[t.ID] = t
 		case 0:
 			result.InteriorTiles[t.ID] = t
 		default:
@@ -446,13 +502,13 @@ func (t Tile) alignTo(other Tile, edge edgeType) {
 			if e1.min() == e2.min() {
 				// rotate, if necessary
 				if i != j {
-					log.Printf("tile %d needs rotations\n", t.ID)
+					// log.Printf("tile %d needs rotations\n", t.ID)
 					t.Rotate90N(2 + int(i-j))
 				}
 
 				// flip, if necessary
 				if !e1.Match(e2) {
-					log.Printf("tile %d needs flipping\n", t.ID)
+					// log.Printf("tile %d needs flipping\n", t.ID)
 					switch i {
 					case topEdge, bottomEdge:
 						t.FlipY()
@@ -467,53 +523,149 @@ func (t Tile) alignTo(other Tile, edge edgeType) {
 	}
 }
 
-func (ts TileSet) matchTile(edge Edge) Tile {
+// FindMatchTile finds a tile that matches the specified edge
+func (ts TileSet) FindMatchTile(edge Edge) *Tile {
 	for _, tile := range ts {
 		for _, e := range tile.Edges {
 			if e.min() == edge.min() {
-				return tile
+				return &tile
 			}
 		}
 	}
 
-	panic("no match")
+	return nil
 }
 
+// func (ts TileSet) doSolve(a Arrangement, x, y edgeType, iter int) {
+// 	// handle last tile
+// 	if len(ts) == 1 {
+// 		for _, t := range ts {
+// 			a[iter][iter] = t
+// 			return
+// 		}
+// 	}
+// 	lastCorner := a[iter][iter]
+
+// 	// NOTE: assumes square puzzle
+// 	for x := iter; x < len(a); x++ {
+// 		a[iter][x]
+// 	}
+
+// 	// column
+// 	for y := iter; y < len(a); y++ {
+
+// 	}
+
+// 	// expand out row
+
+// 	// expand out column
+
+// 	// Solve next iteration
+// }
+
 func (ts TileSet) Solve() Arrangement {
-	// Start with some random arrangement
-	a := newArrangement(ts)
+	var directions []edgeType
+	groups := ts.GetTileGroups()
 
-	// Find correct corners
-	// groups := ts.GetTileGroups()
+	// Pick a random corner
+	corner := groups.CornerTiles.pickOne()
+	delete(groups.PerimeterTiles, corner.ID)
 
-	// Find correct edges
+	// Find the 2 edge types that we build off of
+	for i := topEdge; i < 4; i++ {
 
-	// Find next layer in
+		// We will use the edge type if we can find a match
+		if groups.PerimeterTiles.FindMatchTile(corner.Edges[i]) != nil {
+			directions = append(directions, i)
+		}
+	}
 
-	// repeat until center
+	if len(directions) != 2 {
+		panic(fmt.Sprintf("A corner tile should only have 2 edge directions, found %d\n", len(directions)))
+	}
+
+	// Initialize a new, empty arrangement
+	a := emptyArrangement(ts)
+	fmt.Println("corner", corner.ID)
+	a[0][0] = *corner
+	delete(ts, corner.ID)
+	delete(groups.PerimeterTiles, corner.ID)
+
+	// NOTE: assumes square puzzle
+	xDir, yDir := directions[0], directions[1]
+	for iter := 0; iter < len(a)-1; iter++ {
+
+		fmt.Println("---ACROSS---")
+		for x := iter + 1; x < len(a); x++ {
+			last := a[iter][x-1]
+			fmt.Println("last", last.ID)
+			next := groups.PerimeterTiles.FindMatchTile(last.Edges[xDir])
+			if next == nil {
+				fmt.Println(a)
+				fmt.Println()
+				for id := range groups.PerimeterTiles {
+					fmt.Printf("%d ", id)
+				}
+				fmt.Println()
+				panic("err")
+			}
+			fmt.Println("next", next.ID)
+			delete(ts, next.ID)
+			delete(groups.PerimeterTiles, next.ID)
+			a[iter][x] = *next
+			a[iter][x].alignTo(last, xDir)
+		}
+
+		fmt.Println("---DOWN---")
+		for y := iter + 1; y < len(a); y++ {
+			last := a[y-1][iter]
+			fmt.Println("last", last.ID)
+			next := groups.PerimeterTiles.FindMatchTile(last.Edges[yDir])
+			fmt.Println("next", next.ID)
+			delete(ts, next.ID)
+			delete(groups.PerimeterTiles, next.ID)
+			a[y][iter] = *next
+			a[y][iter].alignTo(last, yDir)
+		}
+		fmt.Println(a)
+
+		// Next group is a new, smaller square
+		groups = ts.GetTileGroups()
+
+		// Set next corner piece
+		last := a[iter+1][iter]
+		next := groups.CornerTiles.FindMatchTile(last.Edges[xDir])
+		a[iter+1][iter+1] = *next
+		a[iter+1][iter+1].alignTo(last, xDir)
+
+		delete(ts, next.ID)
+		delete(groups.PerimeterTiles, next.ID)
+	}
 
 	return a
 }
 
-func newArrangement(tiles map[int]Tile) Arrangement {
+func emptyArrangement(tiles map[int]Tile) Arrangement {
 	size := int(math.Sqrt(float64(len(tiles))))
 	if size*size != len(tiles) {
 		panic("invalid tile arrangement")
 	}
 
 	result := make(Arrangement, size)
-
-	i := 0
-	for _, tile := range tiles {
-		y := i / size
-		if result[y] == nil {
-			result[y] = make([]Tile, size)
-		}
-
-		x := i % size
-		result[y][x] = tile
-		i++
+	for i := 0; i < size; i++ {
+		result[i] = make([]Tile, size)
 	}
+	// i := 0
+	// for _, tile := range tiles {
+	// 	y := i / size
+	// 	if result[y] == nil {
+	// 		result[y] = make([]Tile, size)
+	// 	}
+
+	// 	x := i % size
+	// 	result[y][x] = tile
+	// 	i++
+	// }
 
 	return result
 }
