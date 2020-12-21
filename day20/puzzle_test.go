@@ -7,11 +7,20 @@ import (
 	common "github.com/torbensky/adventofcode-common"
 )
 
+// func TestSolve(t *testing.T) {
+// 	f := common.OpenFile("./test-input.txt")
+// 	defer f.Close()
+// 	tiles := LoadTiles(f)
+// 	a := tiles.Solve()
+// 	fmt.Println(a)
+// 	t.Fail()
+// }
+
 func TestArrangement(t *testing.T) {
 	f := common.OpenFile("./test-input.txt")
 	defer f.Close()
 	tiles := LoadTiles(f)
-	a := newArrangement(tiles)
+	a := emptyArrangement(tiles)
 
 	if len(a) != 3 {
 		t.Fatal("arrangement should have height of 3")
@@ -72,6 +81,73 @@ func TestAlignTiles(t *testing.T) {
 	}
 }
 
+func TestTileSet(t *testing.T) {
+	f := common.OpenFile("./test-input.txt")
+	defer f.Close()
+
+	tiles := LoadTiles(f)
+	if len(tiles) != 9 {
+		t.Fatalf("expected 9 tiles, got %d\n", len(tiles))
+	}
+
+	groups := tiles.GetTileGroups()
+	if len(groups.CornerTiles) != 4 {
+		t.Fatalf("corner tiles wrong: wanted %d got %d", 4, len(groups.CornerTiles))
+	}
+
+	if len(groups.PerimeterTiles) != 8 {
+		t.Fatalf("perimiter tiles wrong: wanted %d got %d", 8, len(groups.PerimeterTiles))
+	}
+
+	if len(groups.InteriorTiles) != 1 {
+		t.Fatalf("interior tiles wrong: wanted %d got %d", 1, len(groups.PerimeterTiles))
+	}
+
+	if _, ok := groups.InteriorTiles[1427]; !ok {
+		t.Fatalf("Interior is missing tile %d\n", 1427)
+	}
+
+	for _, tn := range []int{1951, 3079, 2971, 1171} {
+		if _, ok := groups.CornerTiles[tn]; !ok {
+			t.Fatalf("Corners is missing tile %d\n", tn)
+		}
+	}
+
+	for _, tn := range []int{1951, 3079, 2971, 1171, 2311, 2473, 1489, 2729} {
+		if _, ok := groups.PerimeterTiles[tn]; !ok {
+			t.Fatalf("Perimiter is missing tile %d\n", tn)
+		}
+	}
+
+	for _, c := range groups.CornerTiles {
+		delete(groups.PerimeterTiles, c.ID)
+		count := 0
+		for i := 0; i < 4; i++ {
+			matched := groups.PerimeterTiles.FindMatchTile(c.Edges[i])
+			if matched != nil {
+				count++
+			}
+		}
+		if count != 2 {
+			t.Fatalf("incorrect match count %d for corner tile %s\n", count, c)
+		}
+	}
+
+	t2729 := tiles[2729]
+	delete(tiles, 2729)
+	matched := tiles.FindMatchTile(t2729.Edges[rightEdge])
+	if matched.ID != 1427 {
+		t.Fatalf("tile did not match: wanted %d, got %d", 1427, matched.ID)
+	}
+
+	delete(tiles, 1427)
+	matched = tiles.FindMatchTile(t2729.Edges[rightEdge])
+	if matched != nil {
+		t.Fatal("expected no match")
+	}
+
+}
+
 func TestLoadTiles(t *testing.T) {
 	f := common.OpenFile("./test-input.txt")
 	defer f.Close()
@@ -99,6 +175,160 @@ func TestLoadTiles(t *testing.T) {
 	}
 }
 
+func TestTileFlipY(t *testing.T) {
+	t2311 := newTile(strings.Split(`Tile 2311:
+..##.#..#.
+##..#.....
+#...##..#.
+####.#...#
+##.##.###.
+##...#.###
+.#.#.#..##
+..#....#..
+###...#.#.
+..###..###`, "\n"))
+	t2311.FlipY()
+	wanted := newEdge(".#..#.##..")
+	if !t2311.Edges[topEdge].Match(wanted) {
+		t.Fatalf("top edge is wrong %s != %s", t2311.Edges[topEdge], wanted)
+	}
+
+	wanted = newEdge(".#####..#.")
+	if !t2311.Edges[rightEdge].Match(wanted) {
+		t.Fatalf("right edge is wrong %s != %s", t2311.Edges[rightEdge], wanted)
+	}
+
+	wanted = newEdge("###..###..")
+	if !t2311.Edges[bottomEdge].Match(wanted) {
+		t.Fatalf("bottom edge is wrong %s != %s", t2311.Edges[bottomEdge], wanted)
+	}
+
+	wanted = newEdge("...#.##..#")
+	if !t2311.Edges[leftEdge].Match(wanted) {
+		t.Fatalf("left edge is wrong %s != %s", t2311.Edges[leftEdge], wanted)
+	}
+
+	t2311.FlipY()
+	wanted = newEdge(reverse(".#..#.##.."))
+	if !t2311.Edges[topEdge].Match(wanted) {
+		t.Fatalf("top edge is wrong %s != %s", t2311.Edges[topEdge], wanted)
+	}
+
+	wanted = newEdge("...#.##..#")
+	if !t2311.Edges[rightEdge].Match(wanted) {
+		t.Fatalf("right edge is wrong %s != %s", t2311.Edges[rightEdge], wanted)
+	}
+
+	wanted = newEdge(reverse("###..###.."))
+	if !t2311.Edges[bottomEdge].Match(wanted) {
+		t.Fatalf("bottom edge is wrong %s != %s", t2311.Edges[bottomEdge], wanted)
+	}
+
+	wanted = newEdge(".#####..#.")
+	if !t2311.Edges[leftEdge].Match(wanted) {
+		t.Fatalf("left edge is wrong %s != %s", t2311.Edges[leftEdge], wanted)
+	}
+}
+
+func reverse(s string) string {
+	runes := []rune(s)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	return string(runes)
+}
+
+func TestTileFlipX(t *testing.T) {
+	t2311 := newTile(strings.Split(`Tile 2311:
+..##.#..#.
+##..#.....
+#...##..#.
+####.#...#
+##.##.###.
+##...#.###
+.#.#.#..##
+..#....#..
+###...#.#.
+..###..###`, "\n"))
+	t2311.FlipX()
+	wanted := newEdge("..###..###")
+	if !t2311.Edges[topEdge].Match(wanted) {
+		t.Fatalf("top edge is wrong %s != %s", t2311.Edges[topEdge], wanted)
+	}
+
+	wanted = newEdge("#..##.#...")
+	if !t2311.Edges[rightEdge].Match(wanted) {
+		t.Fatalf("right edge is wrong %s != %s", t2311.Edges[rightEdge], wanted)
+	}
+
+	wanted = newEdge("..##.#..#.")
+	if !t2311.Edges[bottomEdge].Match(wanted) {
+		t.Fatalf("bottom edge is wrong %s != %s", t2311.Edges[bottomEdge], wanted)
+	}
+
+	wanted = newEdge(".#..#####.")
+	if !t2311.Edges[leftEdge].Match(wanted) {
+		t.Fatalf("left edge is wrong %s != %s", t2311.Edges[leftEdge], wanted)
+	}
+
+	t2311.FlipX()
+
+	wanted = Edge{current: 0b0011010010}
+	if !t2311.Edges[topEdge].Match(wanted) {
+		t.Fatalf("top edge is wrong %s != %s", t2311.Edges[topEdge], wanted)
+	}
+
+	wanted = Edge{current: 0b0001011001}
+	if !t2311.Edges[rightEdge].Match(wanted) {
+		t.Fatalf("right edge is wrong %s != %s", t2311.Edges[rightEdge], wanted)
+	}
+
+	wanted = Edge{current: 0b0011100111}
+	if !t2311.Edges[bottomEdge].Match(wanted) {
+		t.Fatalf("bottom edge is wrong %s != %s", t2311.Edges[bottomEdge], wanted)
+	}
+
+	wanted = Edge{current: 0b0111110010}
+	if !t2311.Edges[leftEdge].Match(wanted) {
+		t.Fatalf("left edge is wrong %s != %s", t2311.Edges[leftEdge], wanted)
+	}
+}
+
+func TestTileRotate(t *testing.T) {
+	theTile := newTile(strings.Split(`Tile 2311:
+..##.#..#.
+##..#.....
+#...##..#.
+####.#...#
+##.##.###.
+##...#.###
+.#.#.#..##
+..#....#..
+###...#.#.
+..###..###`, "\n"))
+
+	t.Log("BEFORE\n", theTile)
+	theTile.Rotate90()
+	t.Log("AFTER\n", theTile)
+
+	want := newEdge(".#..#####.")
+	if !theTile.Edges[topEdge].Match(want) {
+		t.Fatalf("rotate failed for top: %s != %s\n", want, theTile.Edges[topEdge])
+	}
+	want = newEdge("..##.#..#.")
+	if !theTile.Edges[rightEdge].Match(want) {
+		t.Fatalf("rotate failed for right: %s != %s\n", want, theTile.Edges[rightEdge])
+	}
+	want = newEdge("#..##.#...")
+	if !theTile.Edges[bottomEdge].Match(want) {
+		t.Fatalf("rotate failed for bottom: %s != %s\n", want, theTile.Edges[bottomEdge])
+	}
+	want = newEdge("..###..###")
+	if !theTile.Edges[leftEdge].Match(want) {
+		t.Fatalf("rotate failed for left: %s != %s\n", want, theTile.Edges[leftEdge])
+	}
+}
+
 func TestTile(t *testing.T) {
 	t1 := newTile(strings.Split(`Tile 2311:
 ..##.#..#.
@@ -114,6 +344,25 @@ func TestTile(t *testing.T) {
 
 	if t1.ID != 2311 {
 		t.Fatalf("tile id wanted %d got %d\n", 2311, t1.ID)
+	}
+
+	// Test tile String()
+
+	tileStr := `..##.#..#.
+##..#.....
+#...##..#.
+####.#...#
+##.##.###.
+##...#.###
+.#.#.#..##
+..#....#..
+###...#.#.
+..###..###
+`
+	if tileStr != t1.String() {
+		t.Log("wanted\n", tileStr)
+		t.Log("got\n", t1.String())
+		t.Fatal("tile edges don't match")
 	}
 
 	wanted := Edge{current: 0b0011010010}
@@ -134,30 +383,6 @@ func TestTile(t *testing.T) {
 	wanted = Edge{current: 0b0111110010}
 	if !t1.Edges[leftEdge].Match(wanted) {
 		t.Fatalf("left edge is wrong %s != %s", t1.Edges[leftEdge], wanted)
-	}
-
-	tileStr := `..##.#..#.
-##..#.....
-#...##..#.
-####.#...#
-##.##.###.
-##...#.###
-.#.#.#..##
-..#....#..
-###...#.#.
-..###..###
-`
-	if tileStr != t1.String() {
-		t.Log("wanted\n", tileStr)
-		t.Log("got\n", t1.String())
-		t.Fatal("tile edges don't match")
-	}
-
-	t.Log("BEFORE\n", t1)
-	t1.Rotate90()
-	if t1.Edges[topEdge].String() != ".#..#####." {
-		t.Log("AFTER\n", t1)
-		t.Fatalf("rotate failed: %s != %s\n", t1.Edges[topEdge], ".#..#####.")
 	}
 }
 
