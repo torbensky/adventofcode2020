@@ -6,8 +6,8 @@ import (
 	"testing"
 )
 
-const part1Answer = -9999999999
-const part2Answer = -9999999999
+const part1Answer = 306
+const part2Answer = 291
 
 func TestPart1(t *testing.T) {
 	t.Parallel()
