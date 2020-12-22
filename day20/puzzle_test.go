@@ -1,31 +1,33 @@
 package day20
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
 	common "github.com/torbensky/adventofcode-common"
 )
 
-// func TestSolve(t *testing.T) {
-// 	tiles := loadTestTiles(t)
-// 	a := tiles.Solve()
-// 	fmt.Println(a)
-// 	t.Fail()
-// }
-
-func TestArrangement(t *testing.T) {
+func TestSolve(t *testing.T) {
 	tiles := loadTestTiles(t)
-	a := emptyArrangement(tiles)
-
-	if len(a) != 3 {
-		t.Fatal("arrangement should have height of 3")
-	}
-
-	if len(a[0]) != 3 {
-		t.Fatal("arrangement should have width of 3")
-	}
+	a := tiles.Solve()
+	fmt.Println(a)
+	t.Fail()
 }
+
+// func TestArrangement(t *testing.T) {
+// 	tiles := loadTestTiles(t)
+// 	a := emptyArrangement(tiles)
+
+// 	if len(a) != 3 {
+// 		t.Fatal("arrangement should have height of 3")
+// 	}
+
+// 	if len(a[0]) != 3 {
+// 		t.Fatal("arrangement should have width of 3")
+// 	}
+// }
 
 func TestImageFlip(t *testing.T) {
 	img := Image{
@@ -110,18 +112,6 @@ func TestAlignTiles(t *testing.T) {
 		2729    1427    2473
 		2971    1489    1171
 
-		Tile 1427:
-		###.##.#..
-		.#..#.##..
-		.#.##.#..#
-		#.#.#.##.#
-		....#...##
-		...##..##.
-		...#.#####
-		.#.####.#.
-		..#..###.#
-		..##.#..#.
-
 	*/
 	tiles[1427].FlipX()
 	t.Logf("matching to center tile 1427...\n%s", tiles[1427])
@@ -132,31 +122,33 @@ func TestAlignTiles(t *testing.T) {
 	// }
 
 	tiles[2311].alignTo(tiles[1427], topEdge)
-	if !tiles[2311].Edges[bottomEdge].Match(tiles[1427].Edges[topEdge]) {
+	if !tiles[2311].Edges[bottomEdge].Match(tiles[1427].Edges[topEdge].flip()) {
 		t.Logf("2311:\n%s", tiles[2311])
-		t.Fatal("2311 failed to align to 1427")
+		t.Fatal("2311 bottom failed to align to top of 1427")
 	}
 
 	tiles[2729].alignTo(tiles[1427], leftEdge)
-	if !tiles[2729].Edges[rightEdge].Match(tiles[1427].Edges[leftEdge]) {
+	if !tiles[2729].Edges[rightEdge].Match(tiles[1427].Edges[leftEdge].flip()) {
 		t.Logf("2729:\n%s", tiles[2729])
-		t.Fatal("2729 failed to align to 1427")
-	}
-
-	tiles[2473].alignTo(tiles[1427], rightEdge)
-	if !tiles[2473].Edges[leftEdge].Match(tiles[1427].Edges[rightEdge]) {
-		t.Logf("2473:\n%s", tiles[2473])
-		t.Fatal("2473 failed to align to 1427")
+		t.Fatal("2729 right failed to align to left of 1427")
 	}
 
 	tiles[1489].alignTo(tiles[1427], bottomEdge)
-	if !tiles[1489].Edges[topEdge].Match(tiles[1427].Edges[bottomEdge]) {
-		t.Logf("1489:\n%s", tiles[2729])
-		t.Fatal("1489 failed to align to 1427")
+	fmt.Printf("align 1489:\n%s", tiles[1489])
+	if !tiles[1489].Edges[topEdge].Match(tiles[1427].Edges[bottomEdge].flip()) {
+		t.Logf("1489:\n%s", tiles[1489])
+
+		t.Fatal("1489 top failed to align to bottom of 1427")
+	}
+
+	tiles[2473].alignTo(tiles[1427], rightEdge)
+	if !tiles[2473].Edges[leftEdge].Match(tiles[1427].Edges[rightEdge].flip()) {
+		t.Logf("2473:\n%s", tiles[2473])
+		t.Fatal("2473 left failed to align to right of 1427")
 	}
 
 	tiles[3079].alignTo(tiles[2311], rightEdge)
-	if tiles[2311].Edges[rightEdge] != tiles[3079].Edges[leftEdge] {
+	if tiles[2311].Edges[rightEdge] != tiles[3079].Edges[leftEdge].flip() {
 		t.Log("aligned to:\n", tiles[2311].String())
 		t.Fatal("tiles[2311] right != tiles[3079] left\n")
 	}
@@ -322,7 +314,7 @@ func TestTileFlipY(t *testing.T) {
 		t.Fatalf("top edge is wrong %s != %s", tiles[2311].Edges[topEdge], wanted)
 	}
 
-	wanted = newEdge(".#..#####.")
+	wanted = newEdge(".#####..#.")
 	if !tiles[2311].Edges[rightEdge].Match(wanted) {
 		t.Fatalf("right edge is wrong %s != %s", tiles[2311].Edges[rightEdge], wanted)
 	}
@@ -332,7 +324,7 @@ func TestTileFlipY(t *testing.T) {
 		t.Fatalf("bottom edge is wrong %s != %s", tiles[2311].Edges[bottomEdge], wanted)
 	}
 
-	wanted = newEdge("...#.##..#")
+	wanted = newEdge("#..##.#...")
 	if !tiles[2311].Edges[leftEdge].Match(wanted) {
 		t.Fatalf("left edge is wrong %s != %s", tiles[2311].Edges[leftEdge], wanted)
 	}
@@ -362,7 +354,7 @@ func TestTileFlipY(t *testing.T) {
 func TestTileFlipX(t *testing.T) {
 	tiles := loadTestTiles(t)
 	tiles[2311].FlipX()
-	wanted := newEdge("###..###..")
+	wanted := newEdge("..###..###")
 	if !tiles[2311].Edges[topEdge].Match(wanted) {
 		t.Fatalf("top edge is wrong %s != %s", tiles[2311].Edges[topEdge], wanted)
 	}
@@ -372,7 +364,7 @@ func TestTileFlipX(t *testing.T) {
 		t.Fatalf("right edge is wrong %s != %s", tiles[2311].Edges[rightEdge], wanted)
 	}
 
-	wanted = newEdge("..##.#..#.")
+	wanted = newEdge(".#..#.##..")
 	if !tiles[2311].Edges[bottomEdge].Match(wanted) {
 		t.Fatalf("bottom edge is wrong %s != %s", tiles[2311].Edges[bottomEdge], wanted)
 	}
@@ -438,6 +430,10 @@ func TestTileRotate(t *testing.T) {
 	if !theTile.Edges[leftEdge].Match(want) {
 		t.Fatalf("rotate failed for left: %s != %s\n", want, theTile.Edges[leftEdge])
 	}
+
+	// 	theTile = newTile(strings.Split(`Tile 1111:
+
+	// `, "\n"))
 }
 
 func TestTile(t *testing.T) {
@@ -536,6 +532,16 @@ func TestEdge(t *testing.T) {
 	if !e3.flip().Match(want) {
 		t.Fatalf("wanted %s got %s", want, e3)
 	}
+
+	e := newEdge("##########")
+	if e.current != 0b1111111111 || e.flipped != 0b1111111111 {
+		t.Fatalf("newEdge failed to load properly: %s,%s", strconv.FormatInt(int64(e.current), 2), strconv.FormatInt(int64(e.flipped), 2))
+	}
+
+	e = newEdge("..........")
+	if e.current != 0 || e.flipped != 0 {
+		t.Fatalf("newEdge failed to load properly: %s,%s", strconv.FormatInt(int64(e.current), 2), strconv.FormatInt(int64(e.flipped), 2))
+	}
 }
 
 func loadTestTiles(t *testing.T) TileSet {
@@ -546,4 +552,53 @@ func loadTestTiles(t *testing.T) TileSet {
 		t.Fatalf("expected 9 tiles, got %d\n", len(tiles))
 	}
 	return tiles
+}
+
+func TestTileString(t *testing.T) {
+	tiles := loadTestTiles(t)
+	for id := range tiles {
+		tileData := getTileData(fmt.Sprint(id))
+		if tileData != tiles[id].String() {
+			t.Fatal("failed match")
+		}
+
+		tiles[id].Rotate90N(4)
+		if tileData != tiles[id].String() {
+			t.Fatal("failed match")
+		}
+
+		tiles[id].Rotate90()
+		if tileData != tiles[id].String() {
+			t.Fatal("failed match")
+		}
+	}
+}
+
+func getTileData(tileID string) string {
+	f := common.OpenFile("./test-input.txt")
+	defer f.Close()
+
+	var result strings.Builder
+	found := false
+	done := false
+	common.ScanLines(f, func(line string) {
+		if done {
+			return
+		}
+
+		if strings.Contains(line, tileID) {
+			found = true
+			return
+		}
+
+		if found {
+			if line == "" {
+				done = true
+			} else {
+				result.WriteString(line)
+				result.WriteByte('\n')
+			}
+		}
+	})
+	return result.String()
 }
