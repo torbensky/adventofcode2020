@@ -230,6 +230,27 @@ func LoadTiles(reader io.Reader) TileSet {
 	return tiles
 }
 
+/*
+
+          TOP
+
+	edge direction -->
+
+           0
+      -----------
+	  |			|
+	  |			|
+ ^ 3  |			|  1  |
+ |	  |			|     |
+ |	  |			|     v
+  	  -----------
+	       2
+
+		 BOTTOM
+
+	<-- edge direction
+*/
+
 // Tile represents a tile of the challenge image puzzle
 type Tile struct {
 	ID    int
@@ -266,7 +287,7 @@ func (t Tile) FlipY() {
 	t.Edges[bottomEdge] = t.Edges[bottomEdge].flip()
 
 	// swap left/right edges
-	t.Edges[leftEdge], t.Edges[rightEdge] = t.Edges[rightEdge], t.Edges[leftEdge]
+	t.Edges[leftEdge], t.Edges[rightEdge] = t.Edges[rightEdge].flip(), t.Edges[leftEdge].flip()
 
 	t.Image.FlipY()
 }
@@ -284,12 +305,13 @@ func (t Tile) FlipX() {
 
 // Rotate90N performs a rotation N times
 func (t Tile) Rotate90N(rotations int) {
-	rotationsNeeded := rotations
-	if rotationsNeeded < 0 {
-		rotationsNeeded += 4
+	fmt.Printf("rotate requested %d times\n", rotations)
+	if rotations < 0 {
+		rotations += 4
 	}
-	fmt.Printf("will rotate %d times\n", rotationsNeeded)
-	for i := 0; i < rotationsNeeded; i++ {
+	rotations %= 4
+	fmt.Printf("will rotate %d times\n", rotations)
+	for i := 0; i < rotations; i++ {
 		t.Rotate90()
 	}
 }
@@ -383,6 +405,8 @@ func newEdge(line string) Edge {
 			flipped = setBit(int(flipped), uint(i))
 		case '.':
 			// no-op
+		default:
+			panic("invalid char encountered")
 		}
 	}
 
@@ -532,21 +556,24 @@ func (t Tile) alignTo(other Tile, edge edgeType) {
 	// Find the two edges that match
 	for i := topEdge; i <= leftEdge; i++ {
 		for j := topEdge; j <= leftEdge; j++ {
-			e1 := t.Edges[i]
-			e2 := other.Edges[j]
-
-			if e1.min() == e2.min() {
-				fmt.Println("edge match")
-				// rotate, if necessary
-				if i != (j+2)%4 {
-					log.Printf("tile %d needs rotations\n", t.ID)
-					t.Rotate90N(int(i - (j + 2)))
+			if t.Edges[i].min() == other.Edges[j].min() {
+				// flip, if necessary
+				oppEdge := (j + 2) % 4
+				fmt.Printf("tile %d edge match %d=>%d, rotating...\n", t.ID, i, j)
+				breaker := 0
+				for t.Edges[oppEdge].min() != other.Edges[j].min() {
+					fmt.Println("ROTATING")
+					t.Rotate90()
+					breaker++
+					if breaker > 10 {
+						break
+					}
 				}
 
-				// flip, if necessary
-				if !e1.Match(e2) {
-					log.Printf("tile %d needs flipping\n", t.ID)
-					switch i {
+				fmt.Printf("tile %d looking at flip decision i=%d,j=%d\n", t.ID, i, j)
+				if other.Edges[j].current != t.Edges[oppEdge].flipped {
+					log.Printf("tile %d needs flipping (i=%d,j=%d)\n", t.ID, i, j)
+					switch j {
 					case topEdge, bottomEdge:
 						t.FlipY()
 					case leftEdge, rightEdge:
@@ -716,55 +743,38 @@ const (
 	leftEdge
 )
 
-/*
+// func (a Arrangement) validate() bool {
 
-          TOP
+// 	for y := 1; y < len(a); y += 2 {
+// 		for x := 1; x < len(a[y]); x += 2 {
+// 			if !a.matchNeighbors(y, x) {
+// 				return false
+// 			}
+// 		}
+// 	}
 
-           0
-      -----------
-	  |			|
-	  |			|
-   3  |			|  1
-	  |			|
-	  |			|
-  	  -----------
-	       2
+// 	return true
+// }
 
-	     BOTTOM
-*/
+// func (a Arrangement) matchNeighbors(y, x int) bool {
 
-func (a Arrangement) validate() bool {
+// 	center := a[y][x]
 
-	for y := 1; y < len(a); y += 2 {
-		for x := 1; x < len(a[y]); x += 2 {
-			if !a.matchNeighbors(y, x) {
-				return false
-			}
-		}
-	}
+// 	// match top
+// 	if y-1 >= 0 && !center.Edges[topEdge].Match(a[y-1][x].Edges[bottomEdge]) {
+// 		return false
+// 	}
 
-	return true
-}
+// 	// match right
+// 	if len(a[y]) > (x+1) && !center.Edges[rightEdge].Match(a[y][x+1].Edges[leftEdge]) {
+// 		return false
+// 	}
 
-func (a Arrangement) matchNeighbors(y, x int) bool {
+// 	// match bottom
+// 	if len(a) > (y+1) && !center.Edges[bottomEdge].Match(a[y+1][x].Edges[topEdge]) {
+// 		return false
+// 	}
 
-	center := a[y][x]
-
-	// match top
-	if y-1 >= 0 && !center.Edges[topEdge].Match(a[y-1][x].Edges[bottomEdge]) {
-		return false
-	}
-
-	// match right
-	if len(a[y]) > (x+1) && !center.Edges[rightEdge].Match(a[y][x+1].Edges[leftEdge]) {
-		return false
-	}
-
-	// match bottom
-	if len(a) > (y+1) && !center.Edges[bottomEdge].Match(a[y+1][x].Edges[topEdge]) {
-		return false
-	}
-
-	// match left
-	return x-1 <= 0 || center.Edges[leftEdge].Match(a[y][x-1].Edges[rightEdge])
-}
+// 	// match left
+// 	return x-1 <= 0 || center.Edges[leftEdge].Match(a[y][x-1].Edges[rightEdge])
+// }
