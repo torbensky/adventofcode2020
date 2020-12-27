@@ -106,7 +106,7 @@ func operatorPriority(operator Token) int {
 type expression []Token
 
 func (s *expression) push(tkn Token) {
-	*s = append(*s, tkn) // Simply append the new value to the end of the stack
+	*s = append(*s, tkn)
 }
 
 func (s *expression) pop() Token {
