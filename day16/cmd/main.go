@@ -26,12 +26,6 @@ func intersect(a, b fieldSet) fieldSet {
 		}
 	}
 
-	for k := range b {
-		if _, ok := a[k]; ok {
-			result[k] = struct{}{}
-		}
-	}
-
 	return result
 }
 

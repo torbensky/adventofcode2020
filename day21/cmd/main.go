@@ -32,12 +32,6 @@ func intersect(a, b stringSet) stringSet {
 		}
 	}
 
-	for k := range b {
-		if _, ok := a[k]; ok {
-			result[k] = struct{}{}
-		}
-	}
-
 	return result
 }
 
